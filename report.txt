@@ -53,3 +53,8 @@ backtrack failed: 4
 943728651
 765143298
 128659473
+
+As one would asume, the amount of backtracks increase with difficulty.
+There is not really much interesting to say about that, however, I have two observations about my implementation:
+1. Hashsets are used for the domains, which to me was not obvious from the start that would be best. But this makes sense as they are mostly just removed from.
+2. A more clever way of queueing and generating constraints are used. I exploit the fact that only assigned variables will be queued.
