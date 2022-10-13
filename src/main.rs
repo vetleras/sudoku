@@ -43,10 +43,11 @@ fn unassigned_variable(assignment: &Assignment) -> Option<(usize, &Domain)> {
     assignment
         .iter()
         .enumerate()
-        .find_map(|(x, var)| match var {
+        .filter_map(|(x, var)| match var {
             Variable::Assigned(_) => None,
             Variable::Unassigned(d) => Some((x, d)),
         })
+        .min_by_key(|(_x, d)| d.len())
 }
 
 fn generate_constraints(x: usize) -> Vec<usize> {
@@ -138,9 +139,7 @@ fn print_assignment(assignment: &Assignment) {
             .iter()
             .map(|v| match v {
                 Variable::Assigned(val) => val.to_string(),
-                Variable::Unassigned(domain) => {
-                    panic!("tried to print unassigned value {:?}", domain);
-                }
+                Variable::Unassigned(_) => " ".to_owned(),
             })
             .collect::<String>();
         println!("{line}");
