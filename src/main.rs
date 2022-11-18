@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use std::{collections::HashSet, env, fs};
 
 type Domain = HashSet<u8>;
@@ -12,7 +12,7 @@ enum Variable {
 type Assignment = [Variable; 81];
 
 fn assignment_from_file(filepath: &str) -> Result<Assignment> {
-    let v = fs::read_to_string(filepath)?
+    fs::read_to_string(filepath)?
         .chars()
         .filter(|c| !c.is_whitespace())
         .map(|c| match c.to_digit(10) {
@@ -20,12 +20,9 @@ fn assignment_from_file(filepath: &str) -> Result<Assignment> {
             Some(n) => Ok(Variable::Assigned(n as u8)),
             None => bail!("non-digit in input"),
         })
-        .collect::<Result<Vec<Variable>>>()?;
-
-    match v.try_into() {
-        Ok(array) => Ok(array),
-        Err(e) => bail!("invalid length of input ({})", e.len()),
-    }
+        .collect::<Result<Vec<Variable>>>()?
+        .try_into()
+        .map_err(|_| anyhow!("invalid length of input"))
 }
 
 fn assigned_variables(assignment: &Assignment) -> Vec<(usize, u8)> {
@@ -54,14 +51,14 @@ fn generate_constraints(x: usize) -> Vec<usize> {
     let mut constraints = Vec::with_capacity(20);
     let (col, row) = (x % 9, x / 9);
     for offset in 0..9 {
-        let j = col + offset * 9;
-        if x != j {
-            constraints.push(j);
+        let i = col + offset * 9;
+        if x != i {
+            constraints.push(i);
         }
 
-        let j = row * 9 + offset;
-        if x != j {
-            constraints.push(j);
+        let i = row * 9 + offset;
+        if x != i {
+            constraints.push(i);
         }
     }
 
@@ -74,9 +71,9 @@ fn generate_constraints(x: usize) -> Vec<usize> {
             if box_base_row + row_offset == row {
                 continue;
             }
-            let j = (box_base_row + row_offset) * 9 + box_base_col + col_offset;
-            if x != j {
-                constraints.push(j);
+            let i = (box_base_row + row_offset) * 9 + box_base_col + col_offset;
+            if x != i {
+                constraints.push(i);
             }
         }
     }
@@ -120,22 +117,22 @@ fn ac3(mut assignment: Assignment) -> Result<Assignment> {
                 Variable::Assigned(assigned) if assigned == val => bail!("inconsistent"),
                 Variable::Assigned(_) => (),
                 Variable::Unassigned(ref mut domain) => {
-                    // if we removed value from domain such that the variable is assigned, we change it to assigned
+                    // if we remove value from domain such that the variable is assigned, we change it to assigned
                     if domain.remove(&val) && domain.len() == 1 {
                         let val = *domain.iter().next().unwrap();
                         assignment[y] = Variable::Assigned(val);
                         queue.push((y, val));
                     }
                 }
-            };
+            }
         }
     }
     Ok(assignment)
 }
 
 fn print_assignment(assignment: &Assignment) {
-    for i in (0..81).step_by(9) {
-        let line = assignment[i..(i + 9)]
+    for row in assignment.chunks(9) {
+        let line = row
             .iter()
             .map(|v| match v {
                 Variable::Assigned(val) => val.to_string(),
