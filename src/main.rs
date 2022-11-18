@@ -90,17 +90,13 @@ fn backtrack(
         for val in domain {
             let mut new_assignment = assignment.clone();
             new_assignment[x] = Variable::Assigned(*val);
-            if let Ok(a) = ac3(new_assignment) {
-                new_assignment = a;
-            } else {
-                continue;
+            match ac3(new_assignment) {
+                Ok(a) => new_assignment = a,
+                _ => continue,
             }
-
-            let result = backtrack(new_assignment, called, failed);
-            if result.is_ok() {
-                return result;
-            } else {
-                failed += 1;
+            match backtrack(new_assignment, called, failed) {
+                Ok(x) => return Ok(x),
+                _ => failed += 1,
             }
         }
         bail!("failure")
