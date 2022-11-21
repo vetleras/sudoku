@@ -140,9 +140,8 @@ fn print_assignment(assignment: &Assignment) {
 }
 
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let filepath = args.get(1).context("filepath missing as cmd arg")?;
-    let assignment = assignment_from_file(filepath).context("loading assignment from file")?;
+    let filepath = env::args().nth(1).context("filepath missing as cmd arg")?;
+    let assignment = assignment_from_file(&filepath).context("loading assignment from file")?;
 
     let (solved_assignment, called, failed) = backtrack(assignment, 0, 0)?;
     println!("backtrack called: {called}");
